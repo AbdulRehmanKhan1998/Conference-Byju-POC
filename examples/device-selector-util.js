@@ -1,6 +1,5 @@
 (function (window, navigator, red5prosdk) { // eslint-disable-line no-unused-vars
     'use strict';
-  
     var targetPublisher;
     var mediaConstraints;
     var cameraSelect = document.getElementById('camera-select');

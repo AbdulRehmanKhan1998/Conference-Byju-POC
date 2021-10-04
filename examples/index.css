@@ -1,0 +1,134 @@
+
+
+.conference-section {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: baseline;
+    flex-flow: wrap;
+    background-color: lightgrey;
+  }
+  
+  .subscribers {
+    display: flex;
+    flex-direction: row;
+    flex-flow: wrap;
+    justify-content: center;
+  }
+  
+  .publisher-name-field, .subscriber-name-field {
+    text-align: center;
+    background-color: #3580A2;
+    color: #fff;
+  }
+  
+  .publisher-mute-notice {
+    text-align: center;
+  }
+  
+  .publisher-mute-controls {
+    text-align: center;
+    border-top: 1px solid #dbdbdb;
+  }
+  
+  .publisher-mute-controls, .publisher-name-field, .subscriber-name-field {
+    padding: 20px 10px!important;
+  }
+  
+  .subscriber-id-field {
+    padding: 20px 10px;
+    background-color: #dbdbdb;
+  }
+  
+  .auto-margined {
+    margin: 1em auto;
+  }
+  .float-left {
+    float: left;
+  }
+  .spaced {
+    margin: 1em;
+  }
+  .video-holder {
+    width: 320px;
+    height: 240px;
+  }
+  #heading{
+    text-align: center;
+    background-color: darkgray;
+  }
+  /*
+  .video-holder {
+    background:url(../../css/assets/red5pro_logo.png) no-repeat center center;
+    background-size: contain;
+  }
+  */
+  .publisher-container, .subscriber-container {
+    width: 320px;
+    background-color: #dbdbdb;
+  }
+  .subscriber-container {
+    margin: 10px;
+  }
+  .publisher-session {
+    width: 100%;
+  }
+  .publisher-settings {
+    width: 100%;
+    background-color: #eee;
+  }
+  .publisher-settings > p {
+    padding: 10px;
+  }
+  .dark-background {
+    background-color: #3b3b3b;
+  }
+  .status-field-gray {
+    padding: 0.4rem 0;
+    background-color: #999;
+    border-top: 1px solid #3b3b3b;
+  }
+  .hidden {
+    display: none;
+  }
+  .device-label {
+    width: 40%;
+    text-align: right;
+    display: inline-block;
+  }
+  .device-control {
+    max-width: 140px;
+  }
+  .device-info {
+    font-size: 0.7em;
+  }
+  .publisher-section {
+    max-width: 320px;
+  }
+  .margin-center {
+    margin: 0 auto;
+  }
+  .settings-area {
+    background-color: #eeee;
+    padding: 10px;
+  }
+  .settings-label {
+    width: auto;
+  }
+  .settings-input {
+    font-size: 1em;
+    height: 1.5rem;
+    padding-left: 0.8rem;
+    max-width: 142px;
+  }
+  .info-title {
+    padding: 20px 0;
+  }
+  .paddedHR {
+    margin: 0!important;
+  }
+  .hidden {
+    display: auto;
+  }
+  

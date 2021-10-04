@@ -1,17 +1,14 @@
 (function (window, document, red5prosdk) {
     'use strict';
-  
-    var isMoz = false;
-    if (window.adapter) {
-      isMoz = window.adapter.browserDetails.browser.toLowerCase() === 'firefox';
-    }
-  
+
     var subscriberMap = {};
     var streamNameField = document.getElementById('streamname-field');
-    var updateSuscriberStatusFromEvent = window.red5proHandleSubscriberEvent;
+    // var divNameToBeRemoved;
+    // var updateSuscriberStatusFromEvent = window.red5proHandleSubscriberEvent;
+
     var subscriberTemplate = '' +
           '<div class="subscriber-session centered">' +
-            '<p class="subscriber-status-field">On hold.</p>' +
+          '<p class="subscriber-status-field">On hold.</p>' +
           '</div>' +
           '<div class="video-holder centered">' +
             '<video autoplay controls playsinline class="red5pro-subscriber red5pro-media red5pro-background"></video>' +
@@ -25,7 +22,9 @@
             '</p>' +
           '</div>';
   
+
     function templateContent (templateHTML) {
+      console.log("inside function");
       var div = document.createElement('div');
       div.classList.add('subscriber-container');
       div.innerHTML = templateHTML;
@@ -63,6 +62,18 @@
       var extension = {
         streamName: streamName,
         mediaElementId: elementId,
+        protocol: 'ws',
+        port: 5080,
+        host: 'localhost',
+        app: 'live',
+        rtcConfiguration: {
+          iceServers: [{urls: 'stun:stun2.l.google.com:19302'}],
+          iceCandidatePoolSize: 2,
+          bundlePolicy: 'max-bundle'
+      },
+      videoEncoding: 'NONE',
+      audioEncoding: 'NONE',
+      rtcpMuxPolicy: 'negotiate',
         subscriptionId: ['subscriber-audio', uid].join('-')
       };
       console.log('[audio:decoy] Adding audio decoy for ' + streamName);
@@ -93,10 +104,27 @@
     }
   
     var SubscriberItem = function (subStreamName, parent, index) {
+      console.log(subStreamName);
       this.subscriptionId = [streamNameField.value, 'sub'].join('-');
       this.streamName = subStreamName;
       this.subscriber = undefined;
-      this.baseConfiguration = undefined;
+      this.baseConfiguration = {
+        // protocol: "wss",
+        // port: 443,
+        // host: "red5stream.searceinc.org",
+        protocol: 'ws',
+        port: 5080,
+        host: 'localhost',
+        app: 'live',
+        rtcConfiguration: {
+            iceServers: [{urls: 'stun:stun2.l.google.com:19302'}],
+            iceCandidatePoolSize: 2,
+            bundlePolicy: 'max-bundle'
+        },
+        videoEncoding: 'NONE',
+        audioEncoding: 'NONE',
+        rtcpMuxPolicy: 'negotiate',
+        };
       this.streamingMode = undefined;
       this.audioDecoy = undefined; // Used when initial mode is `Audio`.
       this.index = index;
@@ -114,7 +142,7 @@
       }
     }
     SubscriberItem.prototype.handleStreamingModeMetadata = function (streamingMode) {
-      if (isMoz) return; // It works in Firefox!
+      // if (isMoz) return; // It works in Firefox!
       var self = this;
       if (this.streamingMode !== streamingMode) {
         var previousStreamingMode = this.streamingMode;
@@ -162,24 +190,46 @@
       var rtcConfig = Object.assign({}, config, {
                         streamName: name,
                         subscriptionId: [this.subscriptionId, uid].join('-'),
+                      // protocol: "wss",
+                        // port: 443,
+                        // host: "red5stream.searceinc.org",
+                        protocol: 'ws',
+                        port: 5080,
+                        host: 'localhost',
+                        app: 'live',
+                        // streamName: "mystream",
+                        rtcConfiguration: {
+                            iceServers: [{urls: 'stun:stun2.l.google.com:19302'}],
+                            iceCandidatePoolSize: 2,
+                            bundlePolicy: 'max-bundle'
+                        },
+                        // mediaElementId: 'red5pro-subscriber',
+                        // subscriptionId: 'mystream' + Math.floor(Math.random() * 0x10000).toString(16),
+                        videoEncoding: 'NONE',
+                        audioEncoding: 'NONE',
+                        rtcpMuxPolicy: 'negotiate',
                         mediaElementId: getSubscriberElementId(name)
                       });
       this.subscriber = new red5prosdk.RTCSubscriber();
+      console.log(this.subscriber);
+      // divNameToBeRemoved=getSubscriberElementId(name);
       this.subscriber.on('Connect.Success', this.resolve.bind(this));
       this.subscriber.on('Connect.Failure', this.reject.bind(this));
       var sub = this.subscriber;
-      var handleStreamingModeMetadata = this.handleStreamingModeMetadata;
-      var toggleVideoPoster = this.toggleVideoPoster;
-      var statusField = this.statusField;
+      // var handleStreamingModeMetadata = this.handleStreamingModeMetadata;
+      // var toggleVideoPoster = this.toggleVideoPoster;
+      // var statusField = this.statusField;
       var reject = this.reject.bind(this);
       var closeCalled = false;
       var close = function (event) { // eslint-disable-line no-unused-vars
         if(closeCalled) return;
         closeCalled = true;
         function cleanup () {
-          var el = document.getElementById(getSubscriberElementId(name) + '-container')
-          el.parentNode.removeChild(el);
-          sub.off('*', respond);
+          // console.log("under cleanup function");
+          // var el = document.getElementById(divNameToBeRemoved + '-container');
+          // console.log(el);
+          // el.parentNode.removeChild(el);
+          // sub.off('*', respond);
           sub.off('Subscribe.Fail', fail);
         }
         sub.off('Subscribe.Connection.Closed', close);
@@ -188,7 +238,15 @@
           removeAudioSubscriberDecoy(self.streamName, self.audioDecoy);
         }
         delete subscriberMap[name];
+       
       };
+           //       toggleVideoPoster(!event.data.streamingMode.match(/Video/));
+      //     }
+      //   }
+      //   if (inFailedState) {
+      //     close();
+      //   }
+      // };
       var fail = function (event) { // eslint-disable-line no-unused-vars
         close();
         var t = setTimeout(function () {
@@ -196,28 +254,16 @@
           new SubscriberItem(self.streamName, self.parent, self.index).execute();
         }, 2000);
       };
-      var respond = function (event) {
-        if (event.type === 'Subscribe.Time.Update') return;
-        console.log('[subscriber:' + name + '] ' + event.type);
-        var inFailedState = updateSuscriberStatusFromEvent(event, statusField);
-        if (event.type === 'Subscribe.Metadata') {
-          if (event.data.streamingMode) {
-            handleStreamingModeMetadata(event.data.streamingMode)
-            toggleVideoPoster(!event.data.streamingMode.match(/Video/));
-          }
-        }
-        if (inFailedState) {
-          close();
-        }
-      };
-  
       this.subscriber.on('Subscribe.Connection.Closed', close);
       this.subscriber.on('Subscribe.Fail', fail);
-      this.subscriber.on('*', respond);
+      // this.subscriber.on('*', respond);
   
       this.subscriber.init(rtcConfig)
         .then(function (subscriber) {
           subscriberMap[name] = subscriber;
+          console.log("subscriber-block");
+          console.log(name);
+          console.log(subscriberMap);
           return subscriber.subscribe();
         })
         .catch(function (error) {

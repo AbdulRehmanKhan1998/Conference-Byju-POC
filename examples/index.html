@@ -1,21 +1,18 @@
 <!doctype html>
-
 <html lang="eng">
   <head>
-   
-    <link rel="stylesheet" href="conference.css">
+    <link rel="stylesheet" href="index.css">
     <script src="https://unpkg.com/red5pro-webrtc-sdk@latest/red5pro-sdk.min.js"></script>
-
-    <script src="subscription-status.js"></script>
   </head>
   <body>
+  <h1 id="heading">Conference</h1>
     <div id="app">
       <div class="conference-section">
         <div id="publisher-container" class="publisher-section publisher-container">
           <div class="settings-area">
             <p>
-              <label for="room-field" class="settings-label">Room:</label>
-              <input id="room-field" name="room-field" class="settings-input">
+              <label for="room-field" class="settings-label">Class:</label>
+              <input id="room-field" placeholder="Enter class name" name="room-field" class="settings-input">
             </p>
           </div>
           <div id="publisher-session" class="publisher-session hidden">
@@ -29,7 +26,7 @@
           </div>
           <div id="publisher-settings" class="publisher-settings">
             <p class="remove-on-broadcast">
-              <label class="device-label" for="streamname-field">Stream Name:</label>
+              <label class="device-label" for="streamname-field">User Name:</label>
               <input id="streamname-field" name="streamname-field" class="settings-input">
             </p>
             <hr class="paddedHR" />
@@ -71,6 +68,6 @@
     </div>
     <script src="conference-subscriber.js"></script>
     <script src="device-selector-util.js"></script>
-    <script src="main.js"></script>
+    <script src="index.js"></script>
   </body>
 </html>

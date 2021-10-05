@@ -2,8 +2,10 @@
 (function(window, document, red5prosdk) {
   'use strict';
 
-  console.log(red5prosdk); //debug
   var isPublishing = false;
+  // const SharedObject = red5prosdk.Red5ProSharedObject;
+  // var so=undefined;
+  // console.log(SharedObject);
   const configuration = {
     protocol: "ws",
     port: 5080,
@@ -50,7 +52,7 @@
 
   var roomField = document.getElementById('room-field');
   // eslint-disable-next-line no-unused-vars
-  // var publisherContainer = document.getElementById('publisher-container');
+  var publisherContainer = document.getElementById('publisher-container');
   var publisherMuteControls = document.getElementById('publisher-mute-controls');
   var publisherSession = document.getElementById('publisher-session');
   var publisherNameField = document.getElementById('publisher-name-field');
@@ -99,7 +101,6 @@
   joinButton.addEventListener('click', function () {
     saveSettings();
     doPublish(streamName);
-    console.log("run")
     setPublishingUI(streamName);
   });
 
@@ -226,7 +227,7 @@
     console.log('[Red5ProPublisher] Publish Complete.');
     // console.log(publisher.getType());
     // [NOTE] Moving SO setup until Package Sent amount is sufficient.
-    //    establishSharedObject(publisher, roomField.value, streamNameField.value);
+      //  establishSharedObject(publisher, roomField.value, streamNameField.value);
     if (publisher.getType().toUpperCase() == 'RTC') {
       // It's flash, let it go.
       console.log("inside socket")
@@ -234,7 +235,7 @@
     }
     try {
       var pc = publisher.getPeerConnection();
-      console.log(peer);
+      console.log(pc);
       var stream = publisher.getMediaStream();
       bitrateTrackingTicket = window.trackBitrate(pc, onBitrateUpdate, null, null, true);
       statisticsField.classList.remove('hidden');
@@ -284,23 +285,24 @@
     publisherNameField.classList.remove('hidden');
     publisherMuteControls.classList.remove('hidden');
     Array.prototype.forEach.call(document.getElementsByClassName('remove-on-broadcast'), function (el) {
+      // console.log(el);
       el.classList.add('hidden');
     });
   }
 
   // eslint-disable-next-line no-unused-vars
-  // function updatePublishingUIOnStreamCount (streamCount) {
-  //   /*
-  //   if (streamCount > 0) {
-  //     publisherContainer.classList.remove('margin-center');
-  //   } else {
-  //     publisherContainer.classList.add('margin-center');
-  //   }
-  //   */
-  // }
+  function updatePublishingUIOnStreamCount (streamCount) {
+    
+    if (streamCount > 0) {
+      publisherContainer.classList.remove('margin-center');
+    } else {
+      publisherContainer.classList.add('margin-center');
+    }
+
+  }
 
   function establishSocketHost (publisher, roomName, streamName) {
-    // console.log(hostSocket);
+    console.log(hostSocket);
     if (hostSocket) return
     var wsProtocol = 'ws'
     var url=wsProtocol+"://"+socketEndpoint+"?room="+roomName+"&streamName="+streamName;
@@ -310,17 +312,41 @@
     //when any user leaves
     hostSocket.onmessage = function (message) {
       var payload = JSON.parse(message.data)
+      console.log("entered")
       console.log("payload")
       console.log(payload);
+      console.log(streamsList.length,payload.streams.length);
+      //when any user left the meet, print the user name and remove from html template
+      if ((roomName === payload.room) && streamsList.length >= payload.streams.length){
+        //some elements are removed
+        var array1=streamsList;
+        var array2=payload.streams;
+        var array3 = array1.filter(function(obj) { return array2.indexOf(obj) == -1; });
+        console.log(array3 + ":: student left");
+        var element = document.getElementById(window.getConferenceSubscriberElementId(array3)+"-container");
+        element.parentNode.removeChild(element);
+      }
+
+
+
+
       if (roomName === payload.room) {
         streamsList = payload.streams
         console.log(streamsList,streamName);
+        console.log(streamName + ":: student joined[published]");
         processStreams(streamsList, streamName);
       }
     }
   }
   console.log("Streamlist");
   console.log(streamsList);
+
+
+
+
+
+
+
   function determinePublisher () {
 
     var config = Object.assign({},
@@ -358,13 +384,41 @@
     return publisher.init(rtcConfig);
 
   }
+  function unpublish () {
+    if (hostSocket !== undefined)  {
+      hostSocket.close()
+    }
+    return new Promise(function (resolve, reject) {
+      var publisher = targetPublisher;
+      publisher.unpublish()
+        .then(function () {
+          onUnpublishSuccess();
+          resolve();
+        })
+        .catch(function (error) {
+          var jsonError = typeof error === 'string' ? error : JSON.stringify(error, 2, null);
+          onUnpublishFail('Unmount Error ' + jsonError);
+          reject(error);
+        });
+    });
+  }
+
+
+
+
+
+
+
+
 
   function doPublish (name) {
+    console.log("targetPublisher");
     console.log(targetPublisher);
     targetPublisher.publish(name)
       .then(function () {
         onPublishSuccess(targetPublisher);
         updateInitialMediaOnPublisher();
+        // establishSharedObject(targetPublisher, roomField.value, streamNameField.value);
       })
       .catch(function (error) {
         var jsonError = typeof error === 'string' ? error : JSON.stringify(error, null, 2);
@@ -392,6 +446,37 @@
         });
     });
   }
+  // function establishSharedObject (publisher, roomName, streamName) {
+  //   // Create new shared object.
+  //   so = new SharedObject(roomName, publisher)
+  //   console.log(so);
+  //   so.on(red5prosdk.SharedObjectEventTypes.CONNECT_SUCCESS, function (event) { // eslint-disable-line no-unused-vars
+  //     console.log('[Red5ProPublisher] SharedObject Connect.');
+  //     console.log('Connected.');
+  //   });
+  //   so.on(red5prosdk.SharedObjectEventTypes.CONNECT_FAILURE, function (event) { // eslint-disable-line no-unused-vars
+  //     console.log('[Red5ProPublisher] SharedObject Fail.');
+  //   });
+  //   so.on(red5prosdk.SharedObjectEventTypes.PROPERTY_UPDATE, function (event) {
+  //     console.log('[Red5ProPublisher] SharedObject Property Update.');
+  //     console.log(JSON.stringify(event.data, null, 2));
+  //     if (event.data.hasOwnProperty('streams')) {
+  //       console.log('Stream list is: ' + event.data.streams + '.');
+  //       var streams = event.data.streams.length > 0 ? event.data.streams.split(',') : [];
+  //       if (!hasRegistered) {
+  //         hasRegistered = true;
+  //         so.setProperty('streams', streams.concat([streamName]).join(','));
+  //       }
+  //       streamsPropertyList = streams;
+  //       processStreams(streamsPropertyList, streamName);
+  //     }
+  //     else if (!hasRegistered) {
+  //       hasRegistered = true;
+  //       streamsPropertyList = [streamName];
+  //       so.setProperty('streams', streamName);
+  //     }
+  //   });
+  // }
 
   // Kick off.
   determinePublisher()
@@ -409,6 +494,7 @@
 
   var shuttingDown = false;
   function shutdown () {
+    console.log("i am leaving");
     if (shuttingDown) return;
     shuttingDown = true;
     function clearRefs () {
@@ -418,7 +504,7 @@
       targetPublisher = undefined;
     }
     unpublish().then(clearRefs).catch(clearRefs);
-    window.untrackBitrate(bitrateTrackingTicket);
+    // window.untrackBitrate(bitrateTrackingTicket);
   }
   window.addEventListener('beforeunload', shutdown);
   window.addEventListener('pagehide', shutdown);
@@ -430,6 +516,8 @@
       return name !== exclusion;
     });
     var list = nonPublishers.filter(function (name, index, self) {
+      // console.log("working or not");
+      // console.log(document.getElementById(window.getConferenceSubscriberElementId(name)));
       return (index == self.indexOf(name)) &&
         !document.getElementById(window.getConferenceSubscriberElementId(name));
     });
@@ -453,9 +541,10 @@
                                   // getAuthenticationParams(),
                                   getUserMediaConfiguration());
       subscribers[0].execute(baseSubscriberConfig);
+    
     }
 
-    // updatePublishingUIOnStreamCount(nonPublishers.length);
+    updatePublishingUIOnStreamCount(nonPublishers.length);
   }
 
 })(this, document, window.red5prosdk);

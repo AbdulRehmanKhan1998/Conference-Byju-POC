@@ -262,7 +262,7 @@
         .then(function (subscriber) {
           subscriberMap[name] = subscriber;
           console.log("subscriber-block");
-          console.log(name);
+          console.log(name + "student has joined[subscribed]");
           console.log(subscriberMap);
           return subscriber.subscribe();
         })

@@ -6,12 +6,12 @@
     // var so=undefined;
     // console.log(SharedObject);
     const configuration = {
-        // protocol: "ws",
-        // port: 5080,
-        // host: "localhost",
-        protocol: "wss",
-        port: 443,
-        host: "red5-dev.tllms.com",
+        protocol: "ws",
+        port: 5080,
+        host: "localhost",
+        // protocol: "wss",
+        // port: 443,
+        // host: "red5-dev.tllms.com",
         app: "live",
         rtcConfiguration: {
             iceServers: [{ urls: "stun:stun2.l.google.com:19302" }],
@@ -332,10 +332,10 @@
             getUserMediaConfiguration());
 
         var rtcConfig = Object.assign({}, config, {
-            protocol: "wss",
-            port: 443,
-            // protocol: 'ws',
-            // port: 5080,
+            // protocol: "wss",
+            // port: 443,
+            protocol: 'ws',
+            port: 5080,
             bandwidth: {
                 video: 256
             },
@@ -496,10 +496,10 @@
         if (subscribers.length > 0) {
             var baseSubscriberConfig = Object.assign({},
                 configuration, {
-                    protocol: "wss",
-                    port: 443
-                        // protocol: 'ws',
-                        // port: 5080
+                    // protocol: "wss",
+                    // port: 443
+                    protocol: 'ws',
+                    port: 5080
                 },
                 // getAuthenticationParams(),
                 getUserMediaConfiguration());

@@ -5,7 +5,6 @@
     var streamNameField = document.getElementById('streamname-field');
     // var divNameToBeRemoved;
     // var updateSuscriberStatusFromEvent = window.red5proHandleSubscriberEvent;
-
     var subscriberTemplate = '' +
         '<div class="subscriber-session centered">' +
         '<p class="subscriber-status-field">On hold.</p>' +
@@ -56,18 +55,30 @@
         return card;
     }
 
+    function hideVideoPoster(streamName) {
+        var videoId = getSubscriberElementId(streamName);
+        var publisherVideo = document.getElementById(videoId);
+        publisherVideo.classList.remove('hidden');
+    }
+
+    function showVideoPoster(streamName) {
+        var videoId = getSubscriberElementId(streamName);
+        var publisherVideo = document.getElementById(videoId);
+        publisherVideo.classList.add('hidden');
+    }
+
     function addAudioSubscriberDecoy(streamName, config, cb) {
         var uid = Math.floor(Math.random() * 0x10000).toString(16);
         var elementId = getSubscriberAudioElementId(streamName);
         var extension = {
             streamName: streamName,
             mediaElementId: elementId,
-            protocol: "wss",
-            port: 443,
-            host: "red5-dev.tllms.com",
-            // protocol: 'ws',
-            // port: 5080,
-            // host: 'localhost',
+            // protocol: "wss",
+            // port: 443,
+            // host: "red5-dev.tllms.com",
+            protocol: 'ws',
+            port: 5080,
+            host: 'localhost',
             app: 'live',
             rtcConfiguration: {
                 iceServers: [{ urls: 'stun:stun2.l.google.com:19302' }],
@@ -90,6 +101,21 @@
                   console.log('[audio:decoy:' + streamName + ':' + elementId + '] ' + event.type);
                 });
                 */
+                /* video turned off feature */
+                aSubscriber.on(red5prosdk.SubscriberEventTypes.SUBSCRIBE_METADATA, (event) => {
+                    console.log('inside subscribers metadata event')
+                    console.log(JSON.stringify(event.data))
+                    console.log(event.data.streamingMode)
+                    console.log(name);
+
+                    if (event.data.streamingMode === 'Audio') {
+                        showVideoPoster(name);
+                    } else {
+                        hideVideoPoster(name);
+                    }
+                });
+
+
                 return aSubscriber.subscribe();
             })
             .then(function() {
@@ -100,6 +126,8 @@
                 console.log(error);
             });
     }
+
+
 
     function removeAudioSubscriberDecoy(streamName, decoy) {
         console.log('[audio:decoy] Removing audio decoy for ' + streamName);
@@ -112,12 +140,12 @@
         this.streamName = subStreamName;
         this.subscriber = undefined;
         this.baseConfiguration = {
-            protocol: "wss",
-            port: 443,
-            host: "red5-dev.tllms.com",
-            // protocol: 'ws',
-            // port: 5080,
-            // host: 'localhost',
+            // protocol: "wss",
+            // port: 443,
+            // host: "red5-dev.tllms.com",
+            protocol: 'ws',
+            port: 5080,
+            host: 'localhost',
             app: 'live',
             rtcConfiguration: {
                 iceServers: [{ urls: 'stun:stun2.l.google.com:19302' }],
@@ -193,12 +221,12 @@
         var rtcConfig = Object.assign({}, config, {
             streamName: name,
             subscriptionId: [this.subscriptionId, uid].join('-'),
-            protocol: "wss",
-            port: 443,
-            host: "red5-dev.tllms.com",
-            // protocol: 'ws',
-            // port: 5080,
-            // host: 'localhost',
+            // protocol: "wss",
+            // port: 443,
+            // host: "red5-dev.tllms.com",
+            protocol: 'ws',
+            port: 5080,
+            host: 'localhost',
             app: 'live',
             // streamName: "mystream",
             rtcConfiguration: {
@@ -268,6 +296,19 @@
                 console.log("subscriber-block");
                 console.log(name + "student has joined[subscribed]");
                 console.log(subscriberMap);
+                subscriber.on(red5prosdk.SubscriberEventTypes.SUBSCRIBE_METADATA, (event) => {
+                    console.log('inside subscribers metadata event 2')
+                    console.log(JSON.stringify(event.data))
+                    console.log(event.data.streamingMode)
+                    console.log(name);
+
+                    if (event.data.streamingMode === 'Audio') {
+                        showVideoPoster(name);
+                    } else {
+                        hideVideoPoster(name);
+                    }
+                });
+
                 return subscriber.subscribe();
             })
             .catch(function(error) {
@@ -275,6 +316,15 @@
                 reject(error);
             });
     }
+
+    /* video turned off feature */
+    // if (subscriber) {
+    //     subscriber.on(red5prosdk.SubscriberEventTypes.SUBSCRIBE_METADATA, (event) => {
+    //         console.log('inside subscribers metadata event 2')
+    //         console.log('[Red5ProSubscriber] SharedObject Connect.');
+    //         console.log(JSON.stringify(event.data))
+    //     });
+    // }
 
     window.getConferenceSubscriberElementId = getSubscriberElementId;
     window.ConferenceSubscriberItem = SubscriberItem;

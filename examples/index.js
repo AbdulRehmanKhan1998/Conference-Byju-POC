@@ -405,24 +405,6 @@
             });
     }
 
-    function unpublish() {
-        if (hostSocket !== undefined) {
-            hostSocket.close()
-        }
-        return new Promise(function(resolve, reject) {
-            var publisher = targetPublisher;
-            publisher.unpublish()
-                .then(function() {
-                    onUnpublishSuccess();
-                    resolve();
-                })
-                .catch(function(error) {
-                    var jsonError = typeof error === 'string' ? error : JSON.stringify(error, 2, null);
-                    onUnpublishFail('Unmount Error ' + jsonError);
-                    reject(error);
-                });
-        });
-    }
     // function establishSharedObject (publisher, roomName, streamName) {
     //   // Create new shared object.
     //   so = new SharedObject(roomName, publisher)

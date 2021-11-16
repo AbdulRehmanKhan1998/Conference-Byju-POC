@@ -73,12 +73,12 @@
         var extension = {
             streamName: streamName,
             mediaElementId: elementId,
-            // protocol: "wss",
-            // port: 443,
-            // host: "red5-dev.tllms.com",
-            protocol: 'ws',
-            port: 5080,
-            host: 'localhost',
+            protocol: "wss",
+            port: 443,
+            host: "red5-dev.tllms.com",
+            // protocol: 'ws',
+            // port: 5080,
+            // host: 'localhost',
             app: 'live',
             rtcConfiguration: {
                 iceServers: [{ urls: 'stun:stun2.l.google.com:19302' }],
@@ -106,6 +106,7 @@
                     console.log('inside subscribers metadata event')
                     console.log(JSON.stringify(event.data))
                     console.log(event.data.streamingMode)
+                    console.log("before name")
                     console.log(name);
 
                     if (event.data.streamingMode === 'Audio') {
@@ -140,12 +141,12 @@
         this.streamName = subStreamName;
         this.subscriber = undefined;
         this.baseConfiguration = {
-            // protocol: "wss",
-            // port: 443,
-            // host: "red5-dev.tllms.com",
-            protocol: 'ws',
-            port: 5080,
-            host: 'localhost',
+            protocol: "wss",
+            port: 443,
+            host: "red5-dev.tllms.com",
+            // protocol: 'ws',
+            // port: 5080,
+            // host: 'localhost',
             app: 'live',
             rtcConfiguration: {
                 iceServers: [{ urls: 'stun:stun2.l.google.com:19302' }],
@@ -221,12 +222,12 @@
         var rtcConfig = Object.assign({}, config, {
             streamName: name,
             subscriptionId: [this.subscriptionId, uid].join('-'),
-            // protocol: "wss",
-            // port: 443,
-            // host: "red5-dev.tllms.com",
-            protocol: 'ws',
-            port: 5080,
-            host: 'localhost',
+            protocol: "wss",
+            port: 443,
+            host: "red5-dev.tllms.com",
+            // protocol: 'ws',
+            // port: 5080,
+            // host: 'localhost',
             app: 'live',
             // streamName: "mystream",
             rtcConfiguration: {

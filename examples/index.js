@@ -2,9 +2,6 @@
     'use strict';
 
     var isPublishing = false;
-    // const SharedObject = red5prosdk.Red5ProSharedObject;
-    // var so=undefined;
-    // console.log(SharedObject);
     const configuration = {
         // protocol: "ws",
         // port: 5080,
@@ -204,13 +201,6 @@
         try {
             var pc = publisher.getPeerConnection();
             console.log(pc);
-            // var stream = publisher.getMediaStream();
-            // bitrateTrackingTicket = window.trackBitrate(pc, onBitrateUpdate, null, null, true);
-            // statisticsField.classList.remove('hidden');
-            // stream.getVideoTracks().forEach(function (track) {
-            //   // var settings = track.getSettings();
-            //   // onResolutionUpdate(settings.width, settings.height);
-            // });
         } catch (e) {
             // no tracking for you!
         }
@@ -226,17 +216,6 @@
         console.log('[Red5ProPublisher] Unpublish Complete.');
     }
 
-    // function getAuthenticationParams () {
-    //   var auth = configuration.authentication;
-    //   return auth && auth.enabled
-    //     ? {
-    //       connectionParams: {
-    //         username: auth.username,
-    //         password: auth.password
-    //       }
-    //     }
-    //     : {};
-    // }
 
     function getUserMediaConfiguration() {
         return {
@@ -269,6 +248,68 @@
         }
 
     }
+    //adding firebase functionality
+    var previousStateStreamsList;
+    var updatedStreamList = new Array();
+
+    function establishFirebaseConnection(publisher, roomName, streamName) {
+        //first time when user joins
+        firebase.database().ref(roomName + "-room_name/streamID").push().set({
+            "streamID": streamName,
+        });
+        //LIST OF VALUES INSIDE MY ROOMNAME
+        firebase.database().ref(roomName + "-room_name/streamID").on("value", function(snapshot) {
+            //updatedStreamsList = snapshot.val()
+            //console.log(snapshot.val());
+            updatedStreamList = new Array();
+            snapshot.forEach((data) => {
+                updatedStreamList.push(data.val())
+                    //console.log("myStreamList")
+                    //console.log(data.val());
+            });
+            //previousStateStreamsList = updatedStreamsList;
+        })
+
+
+        //when someone else join
+        firebase.database().ref(roomName + "-room_name/streamID").on("child_added", function(snapshot) {
+            //pass to console
+            streamsList = snapshot.val().message
+                //need to find out the new value added
+                //{to be done then changed streamName to the new stream name added}
+                //compare the newStreamList with the oldStreamList and find difference that will be our value added
+            console.log(streamsList, streamName);
+            console.log(streamName + ":: student joined[published]");
+            processStreams(streamsList, streamName);
+
+        });
+        //find what all values are there in the streamName here oldStreamList
+
+        //if someone leaves the meet
+        firebase.database().ref(roomName + "-room_name/streamID").on("child_removed", function(snapshot) {
+            console.log(snapshot.val().message + "-left")
+                //same as figure out who has left and change the html according to that
+        })
+
+
+        //when any user left the meet, print the user name and remove from html template
+        if ((roomName === payload.room) && streamsList.length >= payload.streams.length) {
+            //some elements are removed
+            var array1 = streamsList;
+            var array2 = payload.streams;
+            var array3 = array1.filter(function(obj) { return array2.indexOf(obj) == -1; });
+            console.log(array3 + ":: student left");
+            var element = document.getElementById(window.getConferenceSubscriberElementId(array3) + "-container");
+            element.parentNode.removeChild(element);
+        }
+
+
+
+
+    }
+
+
+    //ending firebase functionality
 
     function establishSocketHost(publisher, roomName, streamName) {
         console.log(hostSocket);
@@ -279,17 +320,6 @@
         console.log(url);
         hostSocket = new WebSocket(url);
         console.log(hostSocket);
-
-        // hostSocket.onopen = function (event) {
-        //   console.log('connected');
-        // };
-        // const ws = new WebSocket('ws://localhost:8081');
-
-        // ws.addEventListener('open', function (event) {
-        //     console.log('connected');
-        // });
-
-
 
         //when any user leaves
         hostSocket.onmessage = function(message) {
@@ -404,38 +434,6 @@
                 onPublishFail(jsonError);
             });
     }
-
-    // function establishSharedObject (publisher, roomName, streamName) {
-    //   // Create new shared object.
-    //   so = new SharedObject(roomName, publisher)
-    //   console.log(so);
-    //   so.on(red5prosdk.SharedObjectEventTypes.CONNECT_SUCCESS, function (event) { // eslint-disable-line no-unused-vars
-    //     console.log('[Red5ProPublisher] SharedObject Connect.');
-    //     console.log('Connected.');
-    //   });
-    //   so.on(red5prosdk.SharedObjectEventTypes.CONNECT_FAILURE, function (event) { // eslint-disable-line no-unused-vars
-    //     console.log('[Red5ProPublisher] SharedObject Fail.');
-    //   });
-    //   so.on(red5prosdk.SharedObjectEventTypes.PROPERTY_UPDATE, function (event) {
-    //     console.log('[Red5ProPublisher] SharedObject Property Update.');
-    //     console.log(JSON.stringify(event.data, null, 2));
-    //     if (event.data.hasOwnProperty('streams')) {
-    //       console.log('Stream list is: ' + event.data.streams + '.');
-    //       var streams = event.data.streams.length > 0 ? event.data.streams.split(',') : [];
-    //       if (!hasRegistered) {
-    //         hasRegistered = true;
-    //         so.setProperty('streams', streams.concat([streamName]).join(','));
-    //       }
-    //       streamsPropertyList = streams;
-    //       processStreams(streamsPropertyList, streamName);
-    //     }
-    //     else if (!hasRegistered) {
-    //       hasRegistered = true;
-    //       streamsPropertyList = [streamName];
-    //       so.setProperty('streams', streamName);
-    //     }
-    //   });
-    // }
 
     // Kick off.
     determinePublisher()

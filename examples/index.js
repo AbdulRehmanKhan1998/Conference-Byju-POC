@@ -270,22 +270,21 @@
         }
 
     }
-    //adding firebase functionality
-    // var previousStateStreamsList;
-    // var updatedStreamList = new Array();
-
     let streamKey
     var streamList = new Array();
     var finalStreamList = new Array();
     var tempStreamList = new Array();
-    var strfinalStreamList = new Array();
-    var strtempStreamList = new Array();
+    var previousStreamList = new Array();
+    var currentStreamList = new Array();
 
     function establishFirebaseConnection(publisher, roomName, streamName) {
         //first time when user joins
         firebase.database().ref(roomName + "-room_name/streamID").push().set({
             "streamID": streamName,
         });
+        //tempStreamList, finalStreamList contains list of JSON value
+        //currentStreamList contains value of JSON from tempStreamList
+        //updatedStreamList contains value of JSON from finalStreamList
 
         firebase.database().ref(roomName + "-room_name/streamID").on("value", function(snapshot) {
             tempStreamList = new Array();
@@ -294,32 +293,29 @@
             });
 
             console.log(finalStreamList); //old updated list of stream
-            strfinalStreamList = new Array()
+            previousStreamList = new Array()
             for (let i = 0; i < finalStreamList.length; i++) {
-                strfinalStreamList[i] = finalStreamList[i].streamID;
+                previousStreamList[i] = finalStreamList[i].streamID;
             }
-            console.log(strfinalStreamList) //string version
+            console.log(previousStreamList) //string version
             if (finalStreamList.length >= tempStreamList.length) {
                 const results = finalStreamList.filter(({ streamID: id1 }) => !tempStreamList.some(({ streamID: id2 }) => id2 === id1));
                 console.log(results);
                 console.log(results[0].streamID + "User-[Left]") //user-left worked
                 var element = document.getElementById("red5pro-subscriber-" + results[0].streamID + "-container");
-                console.log(element);
                 element.parentNode.removeChild(element);
             }
 
             finalStreamList = tempStreamList;
-            strtempStreamList = new Array()
+            currentStreamList = new Array()
             for (let i = 0; i < finalStreamList.length; i++) {
-                strtempStreamList[i] = finalStreamList[i].streamID;
+                currentStreamList[i] = finalStreamList[i].streamID;
             }
-            //console.log(finalStreamList) //new updated list of stream //worked for whenever someone leaves
-            console.log(strtempStreamList) //string version //this need to be passed
-            processStreams(strtempStreamList, streamName);
+            console.log(currentStreamList) //string version //this need to be passed
+            processStreams(currentStreamList, streamName);
         });
 
         firebase.database().ref(roomName + "-room_name/streamID").on("child_added", function(snapshot) {
-            console.log("Addition");
             snapshot.forEach((data) => {
                 streamList.push(data.val())
             });
@@ -330,7 +326,6 @@
         });
 
         firebase.database().ref(roomName + "-room_name/streamID").on("child_removed", function(snapshot) {
-            console.log("deletion");
             console.log(snapshot.val() + "-removed")
         })
 
@@ -339,36 +334,38 @@
             streamKey = snapshot.key
             console.log(snapshot.key);
         });
-        async function closeIt() {
-            var element = document.getElementById(window.getConferenceSubscriberElementId(streamKey.streamID) + "-container");
-            element.parentNode.removeChild(element);
-            await firebase.database().ref(roomName + "-room_name/streamID").child(streamKey).remove();
-        }
-        window.onbeforeunload = closeIt;
-
-
-        // firebase.database().ref(roomName + "-room_name/streamID").on("value", function(snapshot) {
-        //     tempStreamList = new Array();
-        //     snapshot.forEach((data) => {
-        //         tempStreamList.push(data.val())
-        //     });
-
-        //     console.log(finalStreamList); //old updated list of stream
-
-        //     if (finalStreamList.length > tempStreamList.length) {
-        //         const results = finalStreamList.filter(({ streamID: id1 }) => !tempStreamList.some(({ streamID: id2 }) => id2 === id1));
-        //         console.log(results);
-        //         console.log(results[0].streamID + "User-[Left]") //user-left worked
-        //         var element = document.getElementById(window.getConferenceSubscriberElementId(results[0].streamID) + "-container");
-        //         element.parentNode.removeChild(element);
-        //     }
-
-        //     finalStreamList = tempStreamList;
-        //     console.log(finalStreamList) //new updated list of stream //worked for whenever someone leaves
-        //     processStreams(finalStreamList, streamList[streamList.length - 1]);
-        // });
 
     }
+    // async function closeIt() {
+    //     var element = document.getElementById(window.getConferenceSubscriberElementId(streamKey.streamID) + "-container");
+    //     element.parentNode.removeChild(element);
+    //     await firebase.database().ref(roomName + "-room_name/streamID").child(streamKey).remove();
+    // }
+    // window.onbeforeunload = closeIt;
+
+
+    // firebase.database().ref(roomName + "-room_name/streamID").on("value", function(snapshot) {
+    //     tempStreamList = new Array();
+    //     snapshot.forEach((data) => {
+    //         tempStreamList.push(data.val())
+    //     });
+
+    //     console.log(finalStreamList); //old updated list of stream
+
+    //     if (finalStreamList.length > tempStreamList.length) {
+    //         const results = finalStreamList.filter(({ streamID: id1 }) => !tempStreamList.some(({ streamID: id2 }) => id2 === id1));
+    //         console.log(results);
+    //         console.log(results[0].streamID + "User-[Left]") //user-left worked
+    //         var element = document.getElementById(window.getConferenceSubscriberElementId(results[0].streamID) + "-container");
+    //         element.parentNode.removeChild(element);
+    //     }
+
+    //     finalStreamList = tempStreamList;
+    //     console.log(finalStreamList) //new updated list of stream //worked for whenever someone leaves
+    //     processStreams(finalStreamList, streamList[streamList.length - 1]);
+    // });
+
+    // }
     // async function closeIt() {
     //     var element = document.getElementById(window.getConferenceSubscriberElementId(streamKey.streamID) + "-container");
     //     element.parentNode.removeChild(element);

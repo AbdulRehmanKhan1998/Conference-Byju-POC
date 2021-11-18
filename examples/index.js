@@ -1,14 +1,34 @@
 (function(window, document, red5prosdk) {
     'use strict';
+    //firebase configuration
+    const firebaseConfig = {
+        apiKey: "AIzaSyAS0nYYOAxwvdGtFo3WtwV83IxpCPlMIvI",
+        authDomain: "chat-app-poc-test-79147.firebaseapp.com",
+        databaseURL: "https://chat-app-poc-test-79147-default-rtdb.firebaseio.com",
+        projectId: "chat-app-poc-test-79147",
+        storageBucket: "chat-app-poc-test-79147.appspot.com",
+        messagingSenderId: "317926791630",
+        appId: "1:317926791630:web:d7f820f2df68d899eab39f",
+        measurementId: "G-XX549GNJSQ"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+
+    //config end here
+
+
+
+
+
 
     var isPublishing = false;
     const configuration = {
-        // protocol: "ws",
-        // port: 5080,
-        // host: "localhost",
-        protocol: "wss",
-        port: 443,
-        host: "red5-dev.tllms.com",
+        protocol: "ws",
+        port: 5080,
+        host: "localhost",
+        // protocol: "wss",
+        // port: 443,
+        // host: "red5-test.tllms.com",
         app: "live",
         rtcConfiguration: {
             iceServers: [{ urls: "stun:stun2.l.google.com:19302" }],
@@ -195,8 +215,10 @@
         //  establishSharedObject(publisher, roomField.value, streamNameField.value);
         if (publisher.getType().toUpperCase() == 'RTC') {
             // It's flash, let it go.
-            console.log("inside socket")
-            establishSocketHost(publisher, roomField.value, streamNameField.value);
+            // console.log("inside socket")
+            // establishSocketHost(publisher, roomField.value, streamNameField.value);
+            console.log("inside firebase connectivity")
+            establishFirebaseConnection(publisher, roomField.value, streamNameField.value)
         }
         try {
             var pc = publisher.getPeerConnection();
@@ -249,106 +271,102 @@
 
     }
     //adding firebase functionality
-    var previousStateStreamsList;
-    var updatedStreamList = new Array();
+    // var previousStateStreamsList;
+    // var updatedStreamList = new Array();
+
+    var finalStreamList = new Array();
+    var tempStreamList = new Array();
+    var streamList = new Array();
 
     function establishFirebaseConnection(publisher, roomName, streamName) {
         //first time when user joins
         firebase.database().ref(roomName + "-room_name/streamID").push().set({
             "streamID": streamName,
         });
-        //LIST OF VALUES INSIDE MY ROOMNAME
+
         firebase.database().ref(roomName + "-room_name/streamID").on("value", function(snapshot) {
-            //updatedStreamsList = snapshot.val()
-            //console.log(snapshot.val());
-            updatedStreamList = new Array();
+            tempStreamList = new Array();
             snapshot.forEach((data) => {
-                updatedStreamList.push(data.val())
-                    //console.log("myStreamList")
-                    //console.log(data.val());
+                tempStreamList.push(data.val())
             });
-            //previousStateStreamsList = updatedStreamsList;
-        })
 
+            console.log(finalStreamList); //old updated list of stream
 
-        //when someone else join
-        firebase.database().ref(roomName + "-room_name/streamID").on("child_added", function(snapshot) {
-            //pass to console
-            streamsList = snapshot.val().message
-                //need to find out the new value added
-                //{to be done then changed streamName to the new stream name added}
-                //compare the newStreamList with the oldStreamList and find difference that will be our value added
-            console.log(streamsList, streamName);
-            console.log(streamName + ":: student joined[published]");
-            processStreams(streamsList, streamName);
+            if (finalStreamList.length > tempStreamList.length) {
+                const results = finalStreamList.filter(({ streamID: id1 }) => !tempStreamList.some(({ streamID: id2 }) => id2 === id1));
+                console.log(results);
+                console.log(results[0].streamID + "User-[Left]") //user-left worked
+                var element = document.getElementById(window.getConferenceSubscriberElementId(results[0].streamID) + "-container");
+                element.parentNode.removeChild(element);
+            }
+
+            finalStreamList = tempStreamList;
+            console.log(finalStreamList) //new updated list of stream //worked for whenever someone leaves
 
         });
-        //find what all values are there in the streamName here oldStreamList
+        firebase.database().ref(roomName + "-room_name/streamID").on("child_added", function(snapshot) {
+            snapshot.forEach((data) => {
+                streamList.push(data.val())
+            });
 
-        //if someone leaves the meet
-        firebase.database().ref(roomName + "-room_name/streamID").on("child_removed", function(snapshot) {
-            console.log(snapshot.val().message + "-left")
-                //same as figure out who has left and change the html according to that
-        })
+            if (streamList[streamList.length - 1]) {
+                console.log(streamList[streamList.length - 1] + "User-[Joined]") //joined-worked
+                console.log(finalStreamList + "finalList of streams to be subscribe")
+                processStreams(finalStreamList, streamList[streamList.length - 1]);
+            }
+        });
+
+        async function closeIt() {
+            // var element = document.getElementById(window.getConferenceSubscriberElementId(results[0].streamID) + "-container");
+            // element.parentNode.removeChild(element);
+            await firebase.database().ref(roomName + "-room_name/streamID").child(streamKey).remove();
 
 
-        //when any user left the meet, print the user name and remove from html template
-        if ((roomName === payload.room) && streamsList.length >= payload.streams.length) {
-            //some elements are removed
-            var array1 = streamsList;
-            var array2 = payload.streams;
-            var array3 = array1.filter(function(obj) { return array2.indexOf(obj) == -1; });
-            console.log(array3 + ":: student left");
-            var element = document.getElementById(window.getConferenceSubscriberElementId(array3) + "-container");
-            element.parentNode.removeChild(element);
         }
-
-
-
-
+        window.onbeforeunload = closeIt;
     }
 
 
     //ending firebase functionality
 
-    function establishSocketHost(publisher, roomName, streamName) {
-        console.log(hostSocket);
-        if (hostSocket) return
-        var wsProtocol = 'ws'
-        var url = wsProtocol + "://" + socketEndpoint + "?room=" + roomName + "&streamName=" + streamName;
-        var url = "ws://localhost:8001/?room=" + roomName + "&streamName=" + streamName;
-        console.log(url);
-        hostSocket = new WebSocket(url);
-        console.log(hostSocket);
+    // function establishSocketHost(publisher, roomName, streamName) {
+    //     console.log(hostSocket);
+    //     if (hostSocket) return
+    //     var wsProtocol = 'ws'
+    //     var url = wsProtocol + "://" + socketEndpoint + "?room=" + roomName + "&streamName=" + streamName;
+    //     var url = "ws://localhost:8001/?room=" + roomName + "&streamName=" + streamName;
+    //     console.log(url);
+    //     hostSocket = new WebSocket(url);
+    //     console.log(hostSocket);
 
-        //when any user leaves
-        hostSocket.onmessage = function(message) {
-            console.log(message)
-            var payload = JSON.parse(message.data)
-            console.log("payload")
-            console.log(payload);
-            console.log(streamsList.length, payload.streams.length);
-            //when any user left the meet, print the user name and remove from html template
-            if ((roomName === payload.room) && streamsList.length >= payload.streams.length) {
-                //some elements are removed
-                var array1 = streamsList;
-                var array2 = payload.streams;
-                var array3 = array1.filter(function(obj) { return array2.indexOf(obj) == -1; });
-                console.log(array3 + ":: student left");
-                var element = document.getElementById(window.getConferenceSubscriberElementId(array3) + "-container");
-                element.parentNode.removeChild(element);
-            }
+    //     //when any user leaves
+    //     hostSocket.onmessage = function(message) {
+    //         console.log(message)
+    //         var payload = JSON.parse(message.data)
+    //         console.log("payload")
+    //         console.log(payload);
+    //         console.log(streamsList.length, payload.streams.length);
+    //         //when any user left the meet, print the user name and remove from html template
+    //         if ((roomName === payload.room) && streamsList.length >= payload.streams.length) {
+    //             //some elements are removed
+    //             var array1 = streamsList;
+    //             var array2 = payload.streams;
+    //             var array3 = array1.filter(function(obj) { return array2.indexOf(obj) == -1; });
+    //             console.log(array3 + ":: student left");
+    //             var element = document.getElementById(window.getConferenceSubscriberElementId(array3) + "-container");
+    //             element.parentNode.removeChild(element);
+    //         }
 
-            if (roomName === payload.room) {
-                streamsList = payload.streams
-                console.log(streamsList, streamName);
-                console.log(streamName + ":: student joined[published]");
-                processStreams(streamsList, streamName);
-            }
-        }
-    }
-    console.log("Streamlist");
-    console.log(streamsList);
+    //         if (roomName === payload.room) {
+    //             streamsList = payload.streams
+    //             console.log(streamsList, streamName);
+    //             console.log(streamName + ":: student joined[published]");
+    //             processStreams(streamsList, streamName);
+    //         }
+    //     }
+    // }
+    // console.log("Streamlist");
+    // console.log(streamsList);
 
 
 
@@ -362,10 +380,10 @@
             getUserMediaConfiguration());
 
         var rtcConfig = Object.assign({}, config, {
-            protocol: "wss",
-            port: 443,
-            // protocol: 'ws',
-            // port: 5080,
+            // protocol: "wss",
+            // port: 443,
+            protocol: 'ws',
+            port: 5080,
             bandwidth: {
                 video: 256
             },
@@ -494,10 +512,10 @@
         if (subscribers.length > 0) {
             var baseSubscriberConfig = Object.assign({},
                 configuration, {
-                    protocol: "wss",
-                    port: 443
-                        // protocol: 'ws',
-                        // port: 5080
+                    // protocol: "wss",
+                    // port: 443
+                    protocol: 'ws',
+                    port: 5080
                 },
                 // getAuthenticationParams(),
                 getUserMediaConfiguration());
